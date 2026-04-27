@@ -16,6 +16,11 @@ app.set('views', path.join(__dirname, 'views'));
 // Serve static files (CSS, client-side JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} request to ${req.url}`);
+    next();
+});
+
 app.use('/', require('./routes/index'));
 
 // Route placeholders (we will uncomment these as we create them)
