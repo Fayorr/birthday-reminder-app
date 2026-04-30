@@ -2,13 +2,19 @@ const nodemailer = require('nodemailer');
 const ejs = require('ejs');
 const path = require('path');
 
-// Configure the email transporter
+// Updated, Render-friendly email transporter
 const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: process.env.EMAIL_USER,
-		pass: process.env.EMAIL_PASS,
-	},
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true for port 465
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+        // This is the magic line that bypasses strict cloud network checks
+        rejectUnauthorized: false
+    }
 });
 
 const sendBirthdayEmail = async (user) => {
