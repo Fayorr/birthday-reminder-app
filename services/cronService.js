@@ -10,7 +10,7 @@ const isLeapYear = (year) => {
 const startCronJobs = () => {
 	// Run every day at 7:00 AM, Africa/Lagos timezone
 	cron.schedule(
-		'0 7 * * *',
+		'/15 * * * *',
 		async () => {
 			console.log('Running daily birthday check...');
 
