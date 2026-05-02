@@ -1,33 +1,44 @@
-const nodemailer = require('nodemailer');
-const ejs = require('ejs');
-const path = require('path');
+const dns = require('dns');
+const { promisify } = require('util');
+const resolve4 = promisify(dns.resolve4);
 
-// Updated, Render-friendly email transporter
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true for port 465
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-        // This is the magic line that bypasses strict cloud network checks
-        rejectUnauthorized: false
-    }
-});
+let transporter;
+
+const getTransporter = async () => {
+	if (transporter) return transporter;
+
+	// Force IPv4 DNS resolution at startup
+	const [ipv4] = await resolve4('smtp.gmail.com');
+
+	transporter = nodemailer.createTransport({
+		host: ipv4,
+		port: 465,
+		secure: true,
+		pool: true,
+		connectionTimeout: 20000,
+		greetingTimeout: 20000,
+		socketTimeout: 20000,
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASS,
+		},
+		tls: {
+			rejectUnauthorized: false,
+			servername: 'smtp.gmail.com',
+		},
+	});
+
+	return transporter;
+};
 
 const sendBirthdayEmail = async (user) => {
 	try {
-		// Path to the EJS template
+		const t = await getTransporter(); // ✅ Get IPv4-resolved transporter
 		const templatePath = path.join(__dirname, '../views/email.ejs');
-
-		// Render the EJS template to an HTML string, passing the username
 		const htmlContent = await ejs.renderFile(templatePath, {
 			username: user.username,
 		});
 
-		// Define email options
 		const mailOptions = {
 			from: `"Birthday App" <${process.env.EMAIL_USER}>`,
 			to: user.email,
@@ -35,8 +46,7 @@ const sendBirthdayEmail = async (user) => {
 			html: htmlContent,
 		};
 
-		// Send the email
-		const info = await transporter.sendMail(mailOptions);
+		const info = await t.sendMail(mailOptions);
 		console.log(`Email sent to ${user.email}: ${info.messageId}`);
 		return true;
 	} catch (error) {
@@ -45,6 +55,4 @@ const sendBirthdayEmail = async (user) => {
 	}
 };
 
-module.exports = {
-	sendBirthdayEmail,
-};
+module.exports = { sendBirthdayEmail };
