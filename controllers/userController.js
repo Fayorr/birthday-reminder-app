@@ -8,7 +8,9 @@ const renderHomePage = (req, res) => {
 // Handle form submission to save a new user
 const createUser = async (req, res) => {
 	try {
-		const { username, email, dateOfBirth } = req.body;
+		const { username, email, dobMonth, dobDay } = req.body; // 👈 updated
+
+		const dateOfBirth = `${dobMonth}-${dobDay}`; // 👈 combine into MM-DD
 
 		// Check if email already exists
 		const existingUser = await User.findOne({ email });

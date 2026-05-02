@@ -15,8 +15,12 @@ const userSchema = new mongoose.Schema(
 			trim: true,
 		},
 		dateOfBirth: {
-			type: Date,
+			type: String,
 			required: [true, 'Date of birth is required'],
+			match: [
+				/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+				'Date of birth must be in MM-DD format',
+			],
 		},
 	},
 	{ timestamps: true },

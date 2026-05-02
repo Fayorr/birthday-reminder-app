@@ -15,16 +15,16 @@ const startCronJobs = () => {
 			console.log('Running daily birthday check...');
 
 			const today = new Date();
-			const currentMonth = today.getMonth() + 1; // getMonth() is 0-indexed
+			const currentMonth = today.getMonth() + 1;
 			const currentDay = today.getDate();
 			const currentYear = today.getFullYear();
 
 			try {
-				// Base query: match the exact month and day
-				let matchConditions = [
-					{ $eq: [{ $month: '$dateOfBirth' }, currentMonth] },
-					{ $eq: [{ $dayOfMonth: '$dateOfBirth' }, currentDay] },
-				];
+				// Format today as MM-DD to match stored format
+				const mm = String(currentMonth).padStart(2, '0');
+				const dd = String(currentDay).padStart(2, '0');
+
+				let query = { dateOfBirth: `${mm}-${dd}` };
 
 				// Leap year logic: If today is Feb 28 and it is NOT a leap year,
 				// we also want to send emails to people born on Feb 29.
@@ -33,18 +33,10 @@ const startCronJobs = () => {
 					currentDay === 28 &&
 					!isLeapYear(currentYear)
 				) {
-					matchConditions = [
-						{ $eq: [{ $month: '$dateOfBirth' }, 2] },
-						{ $in: [{ $dayOfMonth: '$dateOfBirth' }, [28, 29]] },
-					];
+					query = { dateOfBirth: { $in: ['02-28', '02-29'] } };
 				}
 
-				// Find users matching the conditions
-				const celebrants = await User.find({
-					$expr: {
-						$and: matchConditions,
-					},
-				});
+				const celebrants = await User.find(query);
 
 				if (celebrants.length === 0) {
 					console.log('No birthdays today.');

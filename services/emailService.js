@@ -1,6 +1,9 @@
+const nodemailer = require('nodemailer');
 const dns = require('dns');
 const { promisify } = require('util');
 const resolve4 = promisify(dns.resolve4);
+const path = require('path');
+const ejs = require('ejs');
 
 let transporter;
 
@@ -33,7 +36,7 @@ const getTransporter = async () => {
 
 const sendBirthdayEmail = async (user) => {
 	try {
-		const t = await getTransporter(); // ✅ Get IPv4-resolved transporter
+		const t = await getTransporter();
 		const templatePath = path.join(__dirname, '../views/email.ejs');
 		const htmlContent = await ejs.renderFile(templatePath, {
 			username: user.username,
@@ -50,7 +53,8 @@ const sendBirthdayEmail = async (user) => {
 		console.log(`Email sent to ${user.email}: ${info.messageId}`);
 		return true;
 	} catch (error) {
-		console.error(`Failed to send email to ${user.email}:`, error);
+		console.error('FULL EMAIL ERROR:', JSON.stringify(error, null, 2)); // 👈 add this
+		console.error('ERROR MESSAGE:', error.message); // 👈 and this
 		return false;
 	}
 };
