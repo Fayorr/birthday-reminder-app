@@ -5,18 +5,16 @@ const resolve4 = promisify(dns.resolve4);
 const path = require('path');
 const ejs = require('ejs');
 
-// ❌ Remove the cached transporter — always resolve fresh
 const getTransporter = async () => {
-	const ipv4Addresses = await resolve4('smtp.gmail.com'); // get ALL IPs
+	const ipv4Addresses = await resolve4('smtp.gmail.com');
 	console.log('Resolved SMTP IPs:', ipv4Addresses);
 
-	// Try each IP until one works
 	for (const ip of ipv4Addresses) {
 		try {
 			const t = nodemailer.createTransport({
 				host: ip,
-				port: 465,
-				secure: true,
+				port: 587, // 👈 changed from 465
+				secure: false, // 👈 changed from true
 				connectionTimeout: 20000,
 				greetingTimeout: 20000,
 				socketTimeout: 20000,
@@ -30,7 +28,7 @@ const getTransporter = async () => {
 				},
 			});
 
-			await t.verify(); // test this IP actually works
+			await t.verify();
 			console.log(`Connected via SMTP IP: ${ip}`);
 			return t;
 		} catch (err) {
