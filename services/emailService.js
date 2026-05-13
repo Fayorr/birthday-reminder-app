@@ -6,37 +6,24 @@ const path = require('path');
 const ejs = require('ejs');
 
 const getTransporter = async () => {
-	const ipv4Addresses = await resolve4('smtp.gmail.com');
-	console.log('Resolved SMTP IPs:', ipv4Addresses);
+	try {
+		const t = nodemailer.createTransport({
+			host: 'smtp.gmail.com',
+			port: 587, 
+			secure: false, // upgrade later with STARTTLS
+			auth: {
+				user: process.env.EMAIL_USER,
+				pass: process.env.EMAIL_PASS,
+			},
+		});
 
-	for (const ip of ipv4Addresses) {
-		try {
-			const t = nodemailer.createTransport({
-				host: ip,
-				port: 587, // 👈 changed from 465
-				secure: false, // 👈 changed from true
-				connectionTimeout: 20000,
-				greetingTimeout: 20000,
-				socketTimeout: 20000,
-				auth: {
-					user: process.env.EMAIL_USER,
-					pass: process.env.EMAIL_PASS,
-				},
-				tls: {
-					rejectUnauthorized: false,
-					servername: 'smtp.gmail.com',
-				},
-			});
-
-			await t.verify();
-			console.log(`Connected via SMTP IP: ${ip}`);
-			return t;
-		} catch (err) {
-			console.warn(`IP ${ip} failed, trying next...`, err.message);
-		}
+		await t.verify();
+		console.log('Connected via SMTP successfully');
+		return t;
+	} catch (err) {
+		console.error('SMTP Connection Failed:', err.message);
+		throw new Error('Failed to connect to SMTP server');
 	}
-
-	throw new Error('All SMTP IPs failed');
 };
 
 const sendBirthdayEmail = async (user) => {
